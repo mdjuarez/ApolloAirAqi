@@ -1,0 +1,209 @@
+{# >>> change the slug <<< #}
+{% set slug = 'apollo_air_max' %}
+{# Example:
+   'apollo_air_kitchen'
+   'apollo_air_bedroom'
+#}
+
+{# get the values #}
+{% set co2_value              = states('sensor.' ~ slug ~ '_co2') | float(default=4500) %}
+{% set pm25_value             = states('sensor.' ~ slug ~ '_pm_2_5_m_weight_concentration') | float(default=225.4) %}
+{% set temp_value             = states('sensor.' ~ slug ~ '_sen55_temperature') | float(default=21) %}
+{% set humidity_value         = states('sensor.' ~ slug ~ '_sen55_humidity') | float(default=45) %}
+{% set voc_value              = states('sensor.' ~ slug ~ '_sen55_voc') | float(default=500) %}
+{% set ammonia_value          = states('sensor.' ~ slug ~ '_ammonia') | float(default=50) %}
+{% set carbon_monoxide_value  = states('sensor.' ~ slug ~ '_carbon_monoxide') | float(default=10) %}
+{% set pressure_value         = states('sensor.' ~ slug ~ '_dps310_pressure') | float(default=1013) %}
+{% set ethanol_value          = states('sensor.' ~ slug ~ '_ethanol') | float(default=100) %}
+{% set hydrogen_value         = states('sensor.' ~ slug ~ '_hydrogen') | float(default=10) %}
+{% set methane_value          = states('sensor.' ~ slug ~ '_methane') | float(default=1000) %}
+{% set nitrogen_dioxide_value = states('sensor.' ~ slug ~ '_nitrogen_dioxide') | float(default=1) %}
+{% set pm10_value             = states('sensor.' ~ slug ~ '_pm_10_m_weight_concentration') | float(default=50) %}
+{% set pm1_value              = states('sensor.' ~ slug ~ '_pm_1_m_weight_concentration') | float(default=10) %}
+{% set pm4_value              = states('sensor.' ~ slug ~ '_pm_4_m_weight_concentration') | float(default=25) %}
+{% set nox_value              = states('sensor.' ~ slug ~ '_sen55_nox') | float(default=1) %}
+
+{# CO2 Score calculation #}
+{% if co2_value >= 4500 %}
+  {% set co2_score = 0 %}
+{% elif co2_value <= 400 %}
+  {% set co2_score = 20 %}
+{% else %}
+  {% set co2_score = ((4500 - co2_value) / (4500 - 400)) * 20 %}
+{% endif %}
+
+{# PM2.5 Score calculation #}
+{% if pm25_value >= 225.4 %}
+  {% set pm25_score = 0 %}
+{% elif pm25_value <= 10 %}
+  {% set pm25_score = 18 %}
+{% else %}
+  {% set pm25_score = ((225.4 - pm25_value) / (225.4 - 10)) * 18 %}
+{% endif %}
+
+{# VOC Score #}
+{% if voc_value >= 100 %}
+  {% set voc_score = 0 %}
+{% elif voc_value <= 10 %}
+  {% set voc_score = 10 %}
+{% elif voc_value <= 20 %}
+  {% set voc_score = 9 %}
+{% elif voc_value <= 30 %}
+  {% set voc_score = 8 %}
+{% elif voc_value <= 40 %}
+  {% set voc_score = 7 %}
+{% elif voc_value <= 50 %}
+  {% set voc_score = 6 %}
+{% elif voc_value <= 60 %}
+  {% set voc_score = 5 %}
+{% elif voc_value <= 70 %}
+  {% set voc_score = 4 %}
+{% elif voc_value <= 80 %}
+  {% set voc_score = 3 %}
+{% elif voc_value <= 90 %}
+  {% set voc_score = 2 %}
+{% else %}
+  {% set voc_score = 1 %}
+{% endif %}
+
+{# Temperature scoring #}
+{% set ideal_temp = 23 %}
+{% set temp_deviation = (temp_value - ideal_temp) | abs %}
+{% if temp_deviation >= 10 %}
+  {% set temp_score = 0 %}
+{% else %}
+  {% set temp_score = 7 - (temp_deviation * 0.7) %}
+{% endif %}
+
+{# Humidity scoring #}
+{% if humidity_value < 30 %}
+  {% set humidity_score = (humidity_value / 30) * 8 %}
+{% elif humidity_value > 60 %}
+  {% set humidity_score = ((100 - humidity_value) / 40) * 8 %}
+{% else %}
+  {% set humidity_score = 8 %}
+{% endif %}
+
+{# Ammonia Score calculation #}
+{% if ammonia_value >= 50 %}
+  {% set ammonia_score = 0 %}
+{% elif ammonia_value <= 1 %}
+  {% set ammonia_score = 3 %}
+{% else %}
+  {% set ammonia_score = ((50 - ammonia_value) / (50 - 1)) * 3 %}
+{% endif %}
+
+{# Carbon Monoxide Score calculation (Máximo: 15) #}
+{% if carbon_monoxide_value >= 10 %}
+  {% set carbon_monoxide_score = 0 %}
+{% elif carbon_monoxide_value <= 1 %}
+  {% set carbon_monoxide_score = 15 %}
+{% else %}
+  {% set carbon_monoxide_score = ((10 - carbon_monoxide_value) / (10 - 1)) * 15 %}
+{% endif %}
+
+{# Pressure Score calculation (Máx: 1) #}
+{% set ideal_pressure = 1013 %}
+{% set pressure_deviation = (pressure_value - ideal_pressure) | abs %}
+{% if pressure_deviation >= 10 %}
+  {% set pressure_score = 0 %}
+{% else %}
+  {% set pressure_score = (1 - (pressure_deviation / 10)) * 1 %}
+{% endif %}
+
+{# Ethanol Score calculation (Máx: 1) #}
+{% if ethanol_value >= 100 %}
+  {% set ethanol_score = 0 %}
+{% elif ethanol_value <= 1 %}
+  {% set ethanol_score = 1 %}
+{% else %}
+  {% set ethanol_score = ((100 - ethanol_value) / (100 - 1)) * 1 %}
+{% endif %}
+
+{# Hydrogen Score calculation (Máx: 1) #}
+{% if hydrogen_value >= 10 %}
+  {% set hydrogen_score = 0 %}
+{% elif hydrogen_value <= 1 %}
+  {% set hydrogen_score = 1 %}
+{% else %}
+  {% set hydrogen_score = ((10 - hydrogen_value) / (10 - 1)) * 1 %}
+{% endif %}
+
+{# Methane Score calculation (Máx: 2) #}
+{% if methane_value >= 1000 %}
+  {% set methane_score = 0 %}
+{% elif methane_value <= 1 %}
+  {% set methane_score = 2 %}
+{% else %}
+  {% set methane_score = ((1000 - methane_value) / (1000 - 1)) * 2 %}
+{% endif %}
+
+{# Nitrogen Dioxide Score calculation (Máx: 5) #}
+{% if nitrogen_dioxide_value >= 1 %}
+  {% set nitrogen_dioxide_score = 0 %}
+{% elif nitrogen_dioxide_value <= 0.1 %}
+  {% set nitrogen_dioxide_score = 5 %}
+{% else %}
+  {% set nitrogen_dioxide_score = ((1 - nitrogen_dioxide_value) / (1 - 0.1)) * 5 %}
+{% endif %}
+
+{# PM10 Score calculation (Máx: 5) #}
+{% if pm10_value >= 50 %}
+  {% set pm10_score = 0 %}
+{% elif pm10_value <= 10 %}
+  {% set pm10_score = 5 %}
+{% else %}
+  {% set pm10_score = ((50 - pm10_value) / (50 - 10)) * 5 %}
+{% endif %}
+
+{# PM1 Score calculation (Máx: 6) #}
+{% if pm1_value >= 10 %}
+  {% set pm1_score = 0 %}
+{% elif pm1_value <= 1 %}
+  {% set pm1_score = 6 %}
+{% else %}
+  {% set pm1_score = ((10 - pm1_value) / (10 - 1)) * 6 %}
+{% endif %}
+
+{# PM4 Score calculation (Máx: 6) #}
+{% if pm4_value >= 25 %}
+  {% set pm4_score = 0 %}
+{% elif pm4_value <= 5 %}
+  {% set pm4_score = 6 %}
+{% else %}
+  {% set pm4_score = ((25 - pm4_value) / (25 - 5)) * 6 %}
+{% endif %}
+
+{# NOx Score calculation (Máx: 10) – SEN55 (1–500) #}
+{% if nox_value <= 1 %}
+  {% set nox_score = 10 %}
+{% elif nox_value >= 50 %}
+  {% set nox_score = 0 %}
+{% else %}
+  {% set nox_score = ((50 - nox_value) / (50 - 1)) * 10 %}
+{% endif %}
+
+{#  final score #}
+{% set final_score = (
+  co2_score + 
+  pm25_score + 
+  voc_score + 
+  ammonia_score + 
+  carbon_monoxide_score + 
+  pressure_score + 
+  ethanol_score + 
+  hydrogen_score + 
+  methane_score + 
+  nitrogen_dioxide_score + 
+  ((pm10_score + pm1_score + pm4_score) / 3) + 
+  nox_score + 
+  temp_score + 
+  humidity_score
+) | round(2) %}
+
+{# Fallback  #}
+{% if is_state('sensor.' ~ slug ~ '_co2', 'unavailable') %} 
+  {{ -1 }}
+{% else %}
+  {{ final_score if final_score <= 100 else 100 }}
+{% endif %}
