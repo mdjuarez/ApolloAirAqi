@@ -1,10 +1,17 @@
 {# -------- change the slug -------- #}
 {% set slug = 'apollo_air_max' %}
 
+{# >>> change to true if your country uses Farenheit <<< #}
+{% set use_fahrenheit = false %}
+
 {# --- values--- #}
 {% set co2_value = states('sensor.' ~ slug ~ '_co2') | float(default=4500) %}
 {% set pm25_value = states('sensor.' ~ slug ~ '_pm_2_5_m_weight_concentration') | float(default=225.4) %}
 {% set temp_value = states('sensor.' ~ slug ~ '_sen55_temperature') | float(default=21) %}
+{# Convert temperature to °C if needed #}
+{% if use_fahrenheit %}
+  {% set temp_value = ((temp_value - 32) / 1.8) %}
+{% endif %}
 {% set humidity_value = states('sensor.' ~ slug ~ '_sen55_humidity') | float(default=45) %}
 {% set voc_value = states('sensor.' ~ slug ~ '_sen55_voc') | float(default=500) %}
 {% set ammonia_value = states('sensor.' ~ slug ~ '_ammonia') | float(default=50) %}
